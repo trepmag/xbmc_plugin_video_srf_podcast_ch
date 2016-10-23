@@ -244,7 +244,7 @@ def playepisode(channel,episodeid):
 		try:
 			url = 'http://il.srf.ch/integrationlayer/1.0/ue/' + channel + '/video/play/'+episodeid+'.json'
 			response = json.load(open_srf_url(url))
-			urls =  response["Video"]["Playlists"]['Playlist'][1]['url']
+			urls =  response["Video"]["Playlists"]['Playlist'][2 if channel == 'rts' else 1]['url']
 			besturl = ''
 			if urls.__len__() > 1:
 				for tempurl in urls:
