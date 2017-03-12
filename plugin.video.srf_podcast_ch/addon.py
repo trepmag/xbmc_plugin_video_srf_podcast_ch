@@ -65,12 +65,14 @@ def listTvShows(channel):
 			title = show['title']
 		except:
 			title = 'No Title'
-		try:
-			desc = show['description']
-		except:
-			desc = 'No Description'
+		desc = 'No Description'
+	        if 'lead' in show:
+                        desc = show['lead']
+	        elif 'description' in show:
+                        desc = show['description']
 		try:
 			picture = show['Image']['ImageRepresentations']['ImageRepresentation'][0]['url']
+			picture = re.sub(r"\/\d+x\d+$", "", picture) + '?w=800'
 		except:
 			picture = ''
 		addShow(title, show['id'], mode, desc, picture,page,channel)
@@ -89,7 +91,7 @@ def listVideosByMode(channel,mode,page):
 		url = 'http://il.srf.ch/integrationlayer/1.0/ue/' + channel + '/video/editorialPlayerLatest.json?pageNumber='+str(page)+'&pageSize='+str(numberOfEpisodesPerPage)
 	elif mode == 'mostClickedTvShows':
 		url = 'http://il.srf.ch/integrationlayer/1.0/ue/' + channel + '/video/mostClicked.json?pageSize='+str(numberOfEpisodesPerPage)
-	
+
 	response = json.load(open_srf_url(url))
 	videos =  response["Videos"]["Video"]
 	title = ''
@@ -107,6 +109,7 @@ def listVideosByMode(channel,mode,page):
 			desc = 'No Description'
 		try:
 			picture = video['Image']['ImageRepresentations']['ImageRepresentation'][0]['url']
+			picture = re.sub(r"\/\d+x\d+$", "", picture) + '?w=800'
 		except:
 			picture = ''
 		try:
@@ -165,7 +168,7 @@ def listVideosByMode(channel,mode,page):
 #	listitem = xbmcgui.ListItem(path=besturl)
 #	xbmcplugin.setResolvedUrl(pluginhandle, True, listitem)
 
-		
+
 #'this method list all episodes of the selected show'
 def listEpisodes(channel,showid,showbackground,page):
 	url = 'http://il.srf.ch/integrationlayer/1.0/ue/' + channel + '/assetSet/listByAssetGroup/'+showid+'.json?pageNumber='+str(page)+"&pageSize="+str(numberOfEpisodesPerPage)
@@ -177,20 +180,21 @@ def listEpisodes(channel,showid,showbackground,page):
 		maxpage = 1
 
 	show =  response["AssetSets"]["AssetSet"]
-		
+
 	for episode in show:
 		title = episode['title']
 		url = ''
 		desc = ''
-		picture = '' 
+		picture = ''
 		pubdate = episode['publishedDate']
-		
+
 		try:
 			desc = episode['Assets']['Video'][0]['AssetMetadatas']['AssetMetadata'][0]['description']
 		except:
 			desc = 'No Description'
 		try:
 			picture = episode['Assets']['Video'][0]['Image']['ImageRepresentations']['ImageRepresentation'][0]['url']
+			picture = re.sub(r"\/\d+x\d+$", "", picture) + '?w=800'
 		except:
 			# no picture
 			picture = ''
@@ -206,7 +210,7 @@ def listEpisodes(channel,showid,showbackground,page):
 			titleextended = ' - ' + episode['Assets']['Video'][0]['AssetMetadatas']['AssetMetadata'][0]['title']
 		except:
 			titleextended = ''
-	
+
 		addLink(title+titleextended, url, 'playepisode', desc, picture, length, pubdate,showbackground,channel)
 
 	# check if another page is available
@@ -215,16 +219,16 @@ def listEpisodes(channel,showid,showbackground,page):
 	if page < maxpage:
 		page = page + 1
 		addnextpage(addon.getLocalizedString(33001).format(page,maxpage), showid, 'listEpisodes', '', showbackground,page,channel)
-	
+
 	xbmcplugin.endOfDirectory(pluginhandle)
 	if forceViewMode:
 		xbmc.executebuiltin('Container.SetViewMode('+viewModeShows+')')
-    
-#'this method plays the selected episode'    
+
+#'this method plays the selected episode'
 def playepisode(channel,episodeid):
 	besturl = ''
 	downloadflag = 0
-	
+
 	try:
 		url = 'http://il.srf.ch/integrationlayer/1.0/ue/' + channel + '/video/play/'+episodeid+'.json'
 		response = json.load(open_srf_url(url))
@@ -252,10 +256,10 @@ def playepisode(channel,episodeid):
 						besturl = tempurl['text']
 			else:
 				besturl = urls[0]['text']
-			
+
 			downloadflag = 0
 		except:
-			print "not for download"  
+			print "not for download"
 	listitem = xbmcgui.ListItem(path=besturl)
 	xbmcplugin.setResolvedUrl(pluginhandle, True, listitem)
 
@@ -266,7 +270,7 @@ def addChannel(id, name, mode):
     liz = xbmcgui.ListItem(name)
     ok = xbmcplugin.addDirectoryItem(pluginhandle, url=directoryurl, listitem=liz, isFolder=True)
     return ok
-	
+
 def addOption(url, name, mode,channel,page):
     ok = True
     directoryurl = sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&channel="+str(channel)+"&page="+str(page)
